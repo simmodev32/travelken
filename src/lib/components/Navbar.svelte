@@ -7,7 +7,7 @@
 	];
 
 	const rightLinks = [
-		{ label: 'Book Your Trip', href: 'https://your-booking-link.com', external: true },
+		{ label: 'Book Your Trip', href: 'https://worldviewtt.inteletravel.com/', external: true },
 		{ label: 'About', href: '/about', external: false }
 	];
 
@@ -60,9 +60,7 @@
 					</a>
 				</li>
 			{/each}
-			<li>
-				<a href="/curate" class="nav-cta">Plan My Trip</a>
-			</li>
+	
 		</ul>
 
 		<button
@@ -82,7 +80,7 @@
 		<div class="ticker-track">
 			{#each Array(12) as _}
 				<span class="ticker-item">
-					🎉 Book now for a chance to win a <strong>TTD $2,500 grocery shopping spree</strong>
+					Book now for a chance to win a <strong>TTD $2,500</strong> grocery shopping spree
 					<span class="ticker-dot">·</span>
 				</span>
 			{/each}

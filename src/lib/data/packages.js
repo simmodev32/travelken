@@ -33,7 +33,7 @@ export const packages = [
 		region: 'caribbean',
 		durationDays: 9,
 		priceTTD: 14728,
-		image: '/images/packages/end-of-year-cruise.jpg',
+		image: '/images/packages/end-of-year-cruise.webp',
 		highlights: [
 			'Return flights to & from Barbados',
 			'2 nights in Barbados',
@@ -50,7 +50,7 @@ export const packages = [
 		region: 'caribbean',
 		durationDays: 5,
 		priceTTD: 12900,
-		image: '/images/packages/jamdown-in-jamrock.jpg',
+		image: '/images/packages/jamdown-in-jamrock.webp',
 		highlights: [
 			'Round-trip airfare options',
 			'Comfortable accommodations',
@@ -67,7 +67,7 @@ export const packages = [
 		region: 'caribbean',
 		durationDays: 5,
 		priceTTD: 12900,
-		image: '/images/packages/st-maarten-summer.jpg',
+		image: '/images/packages/st-maarten-summer.webp',
 		highlights: [
 			'Round-trip airfare options',
 			'Comfortable accommodations',
@@ -84,7 +84,7 @@ export const packages = [
 		region: 'south-america',
 		durationDays: 5,
 		priceTTD: 14800,
-		image: '/images/packages/colombia-summer.jpg',
+		image: '/images/packages/colombia-summer.webp',
 		highlights: [
 			'Comfortable accommodations',
 			'All-inclusive meals & drinks option',
@@ -101,7 +101,7 @@ export const packages = [
 		region: 'central-america',
 		durationDays: 4,
 		priceTTD: 6680,
-		image: '/images/packages/palance-in-panama.jpg',
+		image: '/images/packages/palance-in-panama.webp',
 		highlights: [
 			'Flights & transfers included',
 			'4–5 star resorts — featured: Sheraton Grand Panama',
@@ -118,7 +118,7 @@ export const packages = [
 		region: 'central-america',
 		durationDays: 4,
 		priceTTD: 6098,
-		image: '/images/packages/experience-guatemala.jpg',
+		image: '/images/packages/experience-guatemala.webp',
 		highlights: [
 			'Flights & transfers included',
 			'4–5 star resorts — featured: Barceló Guatemala City',
@@ -135,7 +135,7 @@ export const packages = [
 		region: 'caribbean',
 		durationDays: 4,
 		priceTTD: 5997,
-		image: '/images/packages/vibes-in-st-vincent.jpg',
+		image: '/images/packages/vibes-in-st-vincent.webp',
 		highlights: [
 			'Round-trip airfare included',
 			'Airport transfers',
@@ -152,7 +152,7 @@ export const packages = [
 		region: 'north-america',
 		durationDays: 4,
 		priceTTD: 5180,
-		image: '/images/packages/explore-cancun.jpg',
+		image: '/images/packages/explore-cancun.webp',
 		highlights: [
 			'Flights & transfers included',
 			'Cyan Cancún Resort — 5 star',
@@ -169,7 +169,7 @@ export const packages = [
 		region: 'caribbean',
 		durationDays: 4,
 		priceTTD: 6765,
-		image: '/images/packages/discover-punta-cana.jpg',
+		image: '/images/packages/discover-punta-cana.webp',
 		highlights: [
 			'Flights & transfers included',
 			'4–5 star resorts',
