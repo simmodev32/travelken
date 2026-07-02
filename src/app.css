@@ -1,0 +1,72 @@
+:root {
+	--navy: #1a2d6b;
+	--navy-deep: #10193f;
+	--gold: #f5a623;
+	--gold-light: #ffc862;
+	--white: #ffffff;
+	--sky: #4fb6e6;
+	--ink: #1c1f2a;
+	--cloud: #f7f8fb;
+	--font-display: 'Bebas Neue', sans-serif;
+	--font-script: 'Dancing Script', cursive;
+	--font-body: 'Inter', sans-serif;
+	--max-width: 1280px;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	font-family: var(--font-body);
+	font-size: 16px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+img, picture, video {
+	display: block;
+	max-width: 100%;
+}
+
+a {
+	text-decoration: none;
+	color: inherit;
+}
+
+button {
+	font-family: inherit;
+	cursor: pointer;
+	border: none;
+	background: none;
+}
+
+h1, h2, h3, h4 {
+	font-family: var(--font-display);
+	letter-spacing: 0.02em;
+	line-height: 1.1;
+}
+
+.container {
+	width: 100%;
+	max-width: var(--max-width);
+	margin: 0 auto;
+	padding: 0 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
