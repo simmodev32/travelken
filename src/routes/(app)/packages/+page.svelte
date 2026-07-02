@@ -1,6 +1,10 @@
 <script>
 	import { packages, categories, durations, prices, regions } from '$lib/data/packages.js';
+	import { enhance } from '$app/forms';
 
+	let { form } = $props();
+
+	// ── Filters ─────────────────────────────────────────────
 	let activeCategories = $state([]);
 	let activeDurations = $state([]);
 	let activePrices = $state([]);
@@ -25,19 +29,17 @@
 
 	let filtered = $derived(
 		packages.filter((pkg) => {
-			const catOk = activeCategories.length === 0 || activeCategories.includes(pkg.category);
-			const durOk = activeDurations.length === 0 || activeDurations.includes(getDurationBucket(pkg.durationDays));
-			const priceOk = activePrices.length === 0 || activePrices.includes(getPriceBucket(pkg.priceTTD));
+			const catOk    = activeCategories.length === 0 || activeCategories.includes(pkg.category);
+			const durOk    = activeDurations.length === 0 || activeDurations.includes(getDurationBucket(pkg.durationDays));
+			const priceOk  = activePrices.length === 0 || activePrices.includes(getPriceBucket(pkg.priceTTD));
 			const regionOk = activeRegions.length === 0 || activeRegions.includes(pkg.region);
 			return catOk && durOk && priceOk && regionOk;
 		})
 	);
 
 	let hasFilters = $derived(
-		activeCategories.length > 0 ||
-		activeDurations.length > 0 ||
-		activePrices.length > 0 ||
-		activeRegions.length > 0
+		activeCategories.length > 0 || activeDurations.length > 0 ||
+		activePrices.length > 0 || activeRegions.length > 0
 	);
 
 	function clearAll() {
@@ -52,7 +54,7 @@
 	}
 
 	function handleClickOutside(e) {
-		if (!e.target.closest('.dropdown')) {
+		if (!e.target.closest('.dropdown') && !e.target.closest('.modal')) {
 			openGroup = null;
 		}
 	}
@@ -98,6 +100,42 @@
 		family:    'linear-gradient(160deg, #4a2800 0%, #c87020 100%)',
 		honeymoon: 'linear-gradient(160deg, #3a0a2a 0%, #a03080 100%)'
 	};
+
+	// ── Modal ────────────────────────────────────────────────
+	let modalOpen = $state(false);
+	let selectedPackage = $state(null);
+	let submitting = $state(false);
+	let modalSuccess = $state(false);
+	let flexibleDates = $state(false);
+	let adults = $state(2);
+	let children = $state(0);
+
+	function openModal(pkg) {
+		selectedPackage = pkg;
+		modalOpen = true;
+		modalSuccess = false;
+		flexibleDates = false;
+		adults = 2;
+		children = 0;
+		document.body.style.overflow = 'hidden';
+	}
+
+	function closeModal() {
+		modalOpen = false;
+		selectedPackage = null;
+		document.body.style.overflow = '';
+	}
+
+	function clamp(val, min, max) {
+		return Math.max(min, Math.min(max, val));
+	}
+
+	// Reset modal success when form prop changes
+	$effect(() => {
+		if (form?.success) {
+			modalSuccess = true;
+		}
+	});
 </script>
 
 <svelte:document onclick={handleClickOutside} />
@@ -106,6 +144,7 @@
 	<title>Packages — WorldView Travel Service</title>
 </svelte:head>
 
+<!-- ── Filter bar ─────────────────────────────────────────── -->
 <div class="filter-bar">
 	<div class="container">
 		<div class="filter-row">
@@ -122,14 +161,7 @@
 							{#if group.active.length > 0}
 								<span class="badge">{group.active.length}</span>
 							{/if}
-							<svg
-								class="chevron"
-								class:rotated={openGroup === group.id}
-								width="12"
-								height="12"
-								viewBox="0 0 12 12"
-								fill="none"
-							>
+							<svg class="chevron" class:rotated={openGroup === group.id} width="12" height="12" viewBox="0 0 12 12" fill="none">
 								<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>
 						</button>
@@ -187,6 +219,7 @@
 	</div>
 </div>
 
+<!-- ── Grid ───────────────────────────────────────────────── -->
 <section class="grid-section">
 	<div class="container">
 		{#if filtered.length === 0}
@@ -210,15 +243,9 @@
 										e.currentTarget.nextElementSibling.style.display = 'block';
 									}}
 								/>
-								<div
-									class="card-img-fallback"
-									style="background: {gradientMap[pkg.category]}; display: none;"
-								></div>
+								<div class="card-img-fallback" style="background: {gradientMap[pkg.category]}; display: none;"></div>
 							{:else}
-								<div
-									class="card-img-fallback"
-									style="background: {gradientMap[pkg.category]};"
-								></div>
+								<div class="card-img-fallback" style="background: {gradientMap[pkg.category]};"></div>
 							{/if}
 							<span class="card-duration">{pkg.durationDays} days</span>
 							<span class="card-region">{pkg.region.replace(/-/g, ' ')}</span>
@@ -229,28 +256,22 @@
 								<span class="card-destination">{pkg.destination}</span>
 								<span class="card-category">{pkg.category}</span>
 							</div>
-
 							<h2 class="card-title">{pkg.title}</h2>
 							<p class="card-desc">{pkg.description}</p>
-
 							<ul class="card-highlights">
 								{#each pkg.highlights as h}
 									<li>{h}</li>
 								{/each}
 							</ul>
-
 							<div class="card-footer">
 								<div class="card-price">
 									<span class="price-label">from</span>
 									<span class="price-value">{ttdFormat(pkg.priceTTD)}</span>
 									<span class="price-label">per person</span>
 								</div>
-								
-								<a href="/curate?destination={encodeURIComponent(pkg.destination)}&package={pkg.id}"
-									class="card-cta"
-								>
+								<button class="card-cta" onclick={() => openModal(pkg)}>
 									Request
-								</a>
+								</button>
 							</div>
 						</div>
 					</article>
@@ -260,6 +281,7 @@
 	</div>
 </section>
 
+<!-- ── Bottom CTA ─────────────────────────────────────────── -->
 <section class="bottom-cta">
 	<div class="container">
 		<div class="bottom-cta-inner">
@@ -271,6 +293,132 @@
 		</div>
 	</div>
 </section>
+
+<!-- ── Modal ──────────────────────────────────────────────── -->
+{#if modalOpen && selectedPackage}
+	<div
+		class="modal-overlay"
+		role="dialog"
+		aria-modal="true"
+		aria-label="Request package"
+		onclick={closeModal}
+	>
+		<div class="modal" onclick={(e) => e.stopPropagation()}>
+			<!-- Close button -->
+			<button class="modal-close" onclick={closeModal} aria-label="Close">✕</button>
+
+			{#if modalSuccess}
+				<!-- Success state -->
+				<div class="modal-success">
+					<div class="success-icon">✈</div>
+					<h2 class="success-title">REQUEST SENT</h2>
+					<p class="success-body">
+						We've received your request for <strong>{selectedPackage.title}</strong>.
+						A consultant will be in touch within 24 hours.
+					</p>
+					<button class="success-close" onclick={closeModal}>Close</button>
+				</div>
+			{:else}
+				<!-- Package context -->
+				<div class="modal-header">
+					<p class="modal-eyebrow">Requesting</p>
+					<h2 class="modal-title">{selectedPackage.title}</h2>
+					<div class="modal-pkg-meta">
+						<span>{selectedPackage.destination}</span>
+						<span class="meta-dot">·</span>
+						<span>{selectedPackage.durationDays} days</span>
+						<span class="meta-dot">·</span>
+						<span>{ttdFormat(selectedPackage.priceTTD)} per person</span>
+					</div>
+				</div>
+
+				<form
+					method="POST"
+					use:enhance={() => {
+						submitting = true;
+						return async ({ update }) => {
+							await update({ reset: false });
+							submitting = false;
+						};
+					}}
+				>
+					<!-- Hidden package info -->
+					<input type="hidden" name="packageId" value={selectedPackage.id} />
+					<input type="hidden" name="packageTitle" value={selectedPackage.title} />
+					<input type="hidden" name="destination" value={selectedPackage.destination} />
+
+					{#if form?.error}
+						<div class="modal-error" role="alert">{form.error}</div>
+					{/if}
+
+					<!-- Personal details -->
+					<div class="modal-section">
+						<h3 class="modal-section-title">Your Details</h3>
+						<div class="field-row">
+							<div class="field">
+								<label for="m-name">Full name <span class="req">*</span></label>
+								<input id="m-name" name="name" type="text" required placeholder="Jane Ramkissoon" />
+							</div>
+							<div class="field">
+								<label for="m-email">Email <span class="req">*</span></label>
+								<input id="m-email" name="email" type="email" required placeholder="jane@example.com" />
+							</div>
+						</div>
+						<div class="field">
+							<label for="m-phone">Phone number</label>
+							<input id="m-phone" name="phone" type="tel" placeholder="+1 (868) 000-0000" />
+						</div>
+					</div>
+
+					<!-- Group size -->
+					<div class="modal-section">
+						<h3 class="modal-section-title">Group Size</h3>
+						<div class="guest-row">
+							<div class="guest-counter">
+								<span class="guest-label">Adults</span>
+								<input type="hidden" name="adults" value={adults} />
+								<div class="counter">
+									<button type="button" onclick={() => (adults = clamp(adults - 1, 1, 20))} aria-label="Remove adult">−</button>
+									<span class="counter-value">{adults}</span>
+									<button type="button" onclick={() => (adults = clamp(adults + 1, 1, 20))} aria-label="Add adult">+</button>
+								</div>
+							</div>
+							<div class="guest-counter">
+								<span class="guest-label">Children <span class="field-hint">(under 12)</span></span>
+								<input type="hidden" name="children" value={children} />
+								<div class="counter">
+									<button type="button" onclick={() => (children = clamp(children - 1, 0, 20))} aria-label="Remove child">−</button>
+									<span class="counter-value">{children}</span>
+									<button type="button" onclick={() => (children = clamp(children + 1, 0, 20))} aria-label="Add child">+</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Notes -->
+					<div class="modal-section">
+						<h3 class="modal-section-title">Anything Else?</h3>
+						<div class="field">
+							<label for="m-notes">Additional notes</label>
+							<textarea
+								id="m-notes"
+								name="notes"
+								rows="3"
+								placeholder="Special occasions, dietary needs, accessibility requirements..."
+							></textarea>
+						</div>
+					</div>
+
+					<button type="submit" class="modal-submit" disabled={submitting}>
+						{submitting ? 'Sending...' : 'Send Request'}
+					</button>
+
+					<p class="modal-disclaimer">We'll be in touch within 24 hours. No commitment required.</p>
+				</form>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <style>
 	/* ── Filter bar ──────────────────────────────────────── */
@@ -345,11 +493,7 @@
 		flex-shrink: 0;
 	}
 
-	.chevron {
-		flex-shrink: 0;
-		transition: transform 0.2s ease;
-	}
-
+	.chevron { flex-shrink: 0; transition: transform 0.2s ease; }
 	.chevron.rotated { transform: rotate(180deg); }
 
 	.dropdown-panel {
@@ -398,11 +542,7 @@
 		flex: 1;
 	}
 
-	.option-check {
-		font-size: 0.72rem;
-		color: #1a2d6b;
-		font-weight: 700;
-	}
+	.option-check { font-size: 0.72rem; color: #1a2d6b; font-weight: 700; }
 
 	.clear-group {
 		display: block;
@@ -500,10 +640,7 @@
 
 	.card:hover .card-img { transform: scale(1.04); }
 
-	.card-img-fallback {
-		position: absolute;
-		inset: 0;
-	}
+	.card-img-fallback { position: absolute; inset: 0; }
 
 	.card-duration,
 	.card-region {
@@ -627,7 +764,8 @@
 		color: #ffffff;
 		background: #1a2d6b;
 		padding: 0.6rem 1.1rem;
-		text-decoration: none;
+		border: none;
+		cursor: pointer;
 		transition: background 0.2s, color 0.2s;
 		white-space: nowrap;
 		flex-shrink: 0;
@@ -676,10 +814,7 @@
 	.empty-clear:hover { background: #f5a623; color: #1a2d6b; }
 
 	/* ── Bottom CTA ──────────────────────────────────────── */
-	.bottom-cta {
-		background: #1a2d6b;
-		padding: 4rem 0;
-	}
+	.bottom-cta { background: #1a2d6b; padding: 4rem 0; }
 
 	.bottom-cta-inner {
 		display: flex;
@@ -719,6 +854,337 @@
 
 	.bottom-cta-btn:hover { background: #ffc862; }
 
+	/* ── Modal overlay ───────────────────────────────────── */
+	.modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.7);
+		z-index: 200;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1.5rem;
+		backdrop-filter: blur(4px);
+		animation: overlayIn 0.2s ease;
+	}
+
+	@keyframes overlayIn {
+		from { opacity: 0; }
+		to   { opacity: 1; }
+	}
+
+	.modal {
+		background: #ffffff;
+		width: 100%;
+		max-width: 560px;
+		max-height: 90vh;
+		overflow-y: auto;
+		position: relative;
+		animation: modalIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	@keyframes modalIn {
+		from { opacity: 0; transform: translateY(20px) scale(0.97); }
+		to   { opacity: 1; transform: translateY(0) scale(1); }
+	}
+
+	.modal-close {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.85rem;
+		color: #6b7280;
+		background: #f3f4f6;
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		transition: background 0.15s, color 0.15s;
+		z-index: 1;
+	}
+
+	.modal-close:hover { background: #e5e7eb; color: #1c1f2a; }
+
+	/* ── Modal header ────────────────────────────────────── */
+	.modal-header {
+		background: #1a2d6b;
+		padding: 2rem 2rem 1.5rem;
+		color: #ffffff;
+	}
+
+	.modal-eyebrow {
+		font-family: 'Dancing Script', cursive;
+		font-size: 1rem;
+		color: #f5a623;
+		margin-bottom: 0.25rem;
+	}
+
+	.modal-title {
+		font-family: 'Bebas Neue', sans-serif;
+		font-size: 2rem;
+		letter-spacing: 0.04em;
+		line-height: 1;
+		color: #ffffff;
+		margin-bottom: 0.75rem;
+	}
+
+	.modal-pkg-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.78rem;
+		color: rgba(255, 255, 255, 0.65);
+		flex-wrap: wrap;
+	}
+
+	.meta-dot { opacity: 0.4; }
+
+	/* ── Modal form ──────────────────────────────────────── */
+	form {
+		padding: 1.5rem 2rem 2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.modal-section {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.modal-section-title {
+		font-family: 'Bebas Neue', sans-serif;
+		font-size: 1rem;
+		letter-spacing: 0.06em;
+		color: #1a2d6b;
+		padding-bottom: 0.5rem;
+		border-bottom: 1px solid #f3f4f6;
+	}
+
+	.field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+	.field-row {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+	}
+
+	label {
+		font-family: 'Inter', sans-serif;
+		font-size: 0.78rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		color: #374151;
+	}
+
+	.guest-label {
+		font-family: 'Inter', sans-serif;
+		font-size: 0.78rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		color: #374151;
+	}
+
+	.req { color: #f5a623; }
+
+	.field-hint {
+		font-size: 0.7rem;
+		color: #9ca3af;
+		font-weight: 400;
+	}
+
+	input[type='text'],
+	input[type='email'],
+	input[type='tel'],
+	input[type='date'],
+	textarea {
+		font-family: 'Inter', sans-serif;
+		font-size: 0.88rem;
+		color: #1c1f2a;
+		background: #f7f8fb;
+		border: 1px solid #d1d5db;
+		padding: 0.65rem 0.85rem;
+		border-radius: 2px;
+		width: 100%;
+		outline: none;
+		transition: border-color 0.2s;
+	}
+
+	input:focus, textarea:focus {
+		border-color: #1a2d6b;
+		background: #ffffff;
+	}
+
+	textarea { resize: vertical; min-height: 80px; }
+
+	.toggle-row { display: flex; align-items: center; }
+
+	.toggle-label {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		cursor: pointer;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: #374151;
+	}
+
+	.toggle-label input[type='checkbox'] {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.toggle-track {
+		display: inline-block;
+		width: 36px;
+		height: 20px;
+		background: #d1d5db;
+		border-radius: 999px;
+		flex-shrink: 0;
+		position: relative;
+		transition: background 0.2s;
+	}
+
+	.toggle-track::after {
+		content: '';
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 16px;
+		height: 16px;
+		background: #ffffff;
+		border-radius: 50%;
+		transition: transform 0.2s;
+	}
+
+	.toggle-label input:checked ~ .toggle-track { background: #1a2d6b; }
+	.toggle-label input:checked ~ .toggle-track::after { transform: translateX(16px); }
+
+	.guest-row { display: flex; gap: 2.5rem; }
+	.guest-counter { display: flex; flex-direction: column; gap: 0.5rem; }
+
+	.counter {
+		display: flex;
+		align-items: center;
+		border: 1px solid #d1d5db;
+		width: fit-content;
+	}
+
+	.counter button {
+		width: 36px;
+		height: 36px;
+		font-size: 1.1rem;
+		color: #1a2d6b;
+		background: #f7f8fb;
+		border: none;
+		cursor: pointer;
+		transition: background 0.15s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.counter button:hover { background: #e8edf5; }
+
+	.counter-value {
+		width: 44px;
+		text-align: center;
+		font-family: 'Bebas Neue', sans-serif;
+		font-size: 1.3rem;
+		letter-spacing: 0.04em;
+		color: #1a2d6b;
+	}
+
+	.modal-error {
+		background: #fef2f2;
+		border: 1px solid #fca5a5;
+		color: #b91c1c;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.82rem;
+		padding: 0.75rem 1rem;
+		border-radius: 2px;
+	}
+
+	.modal-submit {
+		width: 100%;
+		background: #1a2d6b;
+		color: #ffffff;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.88rem;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		padding: 1rem;
+		border: none;
+		cursor: pointer;
+		transition: background 0.2s, opacity 0.2s;
+		margin-top: 0.5rem;
+	}
+
+	.modal-submit:hover:not(:disabled) { background: #f5a623; color: #1a2d6b; }
+	.modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+	.modal-disclaimer {
+		font-family: 'Inter', sans-serif;
+		font-size: 0.72rem;
+		color: #9ca3af;
+		text-align: center;
+		margin-top: -0.75rem;
+	}
+
+	/* ── Modal success ───────────────────────────────────── */
+	.modal-success {
+		padding: 3.5rem 2rem;
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.success-icon { font-size: 2.5rem; }
+
+	.success-title {
+		font-family: 'Bebas Neue', sans-serif;
+		font-size: 2rem;
+		letter-spacing: 0.06em;
+		color: #1a2d6b;
+	}
+
+	.success-body {
+		font-family: 'Inter', sans-serif;
+		font-size: 0.9rem;
+		line-height: 1.7;
+		color: #4b5563;
+		max-width: 360px;
+	}
+
+	.success-close {
+		margin-top: 0.5rem;
+		font-family: 'Inter', sans-serif;
+		font-size: 0.8rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: #ffffff;
+		background: #1a2d6b;
+		padding: 0.75rem 2rem;
+		border: none;
+		cursor: pointer;
+		transition: background 0.2s, color 0.2s;
+	}
+
+	.success-close:hover { background: #f5a623; color: #1a2d6b; }
+
 	/* ── Responsive ──────────────────────────────────────── */
 	@media (max-width: 1024px) {
 		.grid { grid-template-columns: repeat(2, 1fr); }
@@ -728,11 +1194,15 @@
 		.filter-row { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
 		.filter-meta { width: 100%; justify-content: space-between; }
 		.filter-bar { top: 102px; }
+		.modal { max-height: 95vh; }
 	}
 
 	@media (max-width: 640px) {
 		.grid { grid-template-columns: 1fr; }
 		.filter-bar { position: static; }
 		.bottom-cta-inner { flex-direction: column; text-align: center; }
+		.field-row { grid-template-columns: 1fr; }
+		form { padding: 1.25rem; }
+		.modal-header { padding: 1.5rem 1.25rem 1.25rem; }
 	}
 </style>
